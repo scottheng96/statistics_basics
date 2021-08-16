@@ -7,22 +7,103 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+A personal basic guide for R projects, with references to multiple R-code related topics
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+### Handling packages
 
-```{r cars}
-summary(cars)
+```{r packages}
+# install package function that installs the package 
+# package still requires loading as library
+loadPackage <- function(package) {
+  if (!package %in% installed.packages())
+    install.packages(package)
+}
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+## Petals Practice
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+This code loads the iris dataset and performs simple statistically modelling and visualization as an introductory practice to R and statistics. This takes references to: https://rpubs.com/moeransm/intro-iris.
+
+```{r load data and packages echo=FALSE}
+loadPackage("dplyr")
+library(dplyr)
+library(datasets)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+data(iris)
+```
+
+```{r}
+summary(iris)
+```
+
+```{r}
+summary(iris$Sepal.Length)
+```
+
+### dplyr: Filter
+```{r}
+# filter only the virginia specices
+virginica <- filter(iris, Species=="virginica")
+
+# displays the first six rows
+head(virginica)
+```
+
+```{r}
+sepalLength6 <- filter(iris, Species=="virginica", Sepal.Length > 6)
+tail(sepalLength6)
+```
+### dplyr: Select
+
+```{r}
+# selected specific columns
+selected <- select(iris, Sepal.Length, Sepal.Width, Petal.Length)
+selected1 <- select(iris, Sepal.Length:Petal.Length)
+selected2 <- select(iris,1:3)
+#they are all the same
+```
+
+### dplyr: Mutate
+
+```{r}
+# created a new column
+newCol <- mutate(iris,greater.half = Sepal.Width > 0.5 * Sepal.Length)
+tail(newCol)
+```
+
+### Other functions
+
+```{r}
+# arrange()
+newCol <- arrange(newCol, Petal.Width)
+head(newCol)
+
+arrange(iris,desc(Petal.Width))
+
+# %>%
+arr.virg <- newCol %>% filter(Species=="virginica") %>% arrange(Sepal.Width)
+arr.virg
+```
+
+```{r}
+summarise(arr.virg, mean.length=mean(Sepal.Length,na.rm=TRUE))
+```
+### Visualization
+```{r}
+# matrix
+plot(iris)
+```
+
+```{r}
+# regular x,y plot
+plot(iris$Sepal.Length,iris$Sepal.Width)
+```
+
+```{r}
+hist(iris$Sepal.Length)
+```
