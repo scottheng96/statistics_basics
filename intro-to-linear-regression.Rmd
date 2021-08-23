@@ -1,0 +1,39 @@
+---
+title: "introduction-to-linear-regression"
+author: "Scott Heng"
+date: "8/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Linear Regression
+
+Linear regression is a linear approach for modelling the relationship between a scalar response and one or more explanatory variables. The relationships are modeled using linear predictor functions (a set of coefficients and explanatory variables) whose unknown model parameters are estimated from the data, which can consequently be used to predict the outcome of response variable.
+
+Given a data set $\{y_i,x_{i1},x_{i2}, ... ,x_{ip}\}^n_{i=1}$ where there are n data points and p explanatory variables, the relationship can be modelled as 
+$$
+y_{i} = \beta_0 + \beta_1 x_{i1} + ... + \beta_p x_{ip} = \mathbf{x}^{\mathbf{T}}_i \mathbf{\beta} \; for \ i=1...n
+$$
+
+
+## Loading data and packages
+
+```{r packages include=FALSE}
+# install package function that installs the package 
+# package still requires loading as library
+loadPackage <- function(package) {
+  if (!package %in% installed.packages())
+    install.packages(package)
+}
+```
+
+
+
+```{r load data and packages echo=FALSE}
+loadPackage("dplyr")
+library(dplyr)
+library(datasets)
+```
