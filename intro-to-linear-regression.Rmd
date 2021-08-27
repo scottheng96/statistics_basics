@@ -88,7 +88,7 @@ Normality can be checked by:
 ```{r packages, include=FALSE}
 # install package function that installs the package 
 # package still requires loading as library
-loadPackage <- function(package) {
+validatePackage <- function(package) {
   if (!package %in% installed.packages())
     install.packages(package)
 }
@@ -102,15 +102,37 @@ A fitted linear regression model can be used to identify the relationship betwee
 
 ### Loading data and packages
 ```{r load data and packages, message=FALSE}
-loadPackage("dplyr")
+validatePackage("dplyr")
+validatePackage("tidyverse")
 library(dplyr)
+library(tidyverse)
 library(datasets)
 ```
 
 ### Data Preparation
 ```{r}
 data(iris)
-data <- iris
-head(data)
-summary(data)
+head(iris)
+summary(iris)
+```
+
+### EDA
+```{r}
+pairs(iris[1:4], main = "Iris Data", pch = 21, bg = c("red", "green3", "blue"))
+```
+*ggplot histogram, box plot, etc*
+
+```{r}
+simple_linear <- lm(Petal.Width ~ Petal.Length, data=iris)
+summary(simple_linear)
+```
+
+```{r}
+multi_linear <- lm(Petal.Width ~ Petal.Length + Sepal.Length + Sepal.Width + Species, data=iris)
+summary(multi_linear)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(multi_linear)
 ```
