@@ -36,7 +36,8 @@ The relationship between X and the mean of Y is linear.
 Linearity can be checked by:
 
 1. Residuals vs. predicted plot
-- Curved or non-horizontally spead cloud on such a plot is diagnostic for non-linearity. To uncover more hidden (partial) non-linearity plot the residuals against each of the predictors.
+- A *Residual* is the vertical distance between a data point and the regression line. Each data point has *one* residual.
+- Curved or non-horizontally spread cloud on such a plot is diagnostic for non-linearity. To uncover more hidden (partial) non-linearity plot the residuals against each of the predictors.
 
 #### Constant Variance (homoscedasticity)
 The variance of the residual is the same for any value of X. A plot of standardized **residuals versus predicted** values can show whether points are equally distributed across all values of the independent variables.
@@ -102,11 +103,11 @@ A fitted linear regression model can be used to identify the relationship betwee
 
 ### Loading data and packages
 ```{r load data and packages, message=FALSE}
-validatePackage("dplyr")
-validatePackage("tidyverse")
 library(dplyr)
 library(tidyverse)
 library(datasets)
+library(caret)
+library(car)
 ```
 
 ### Data Preparation
@@ -127,12 +128,96 @@ simple_linear <- lm(Petal.Width ~ Petal.Length, data=iris)
 summary(simple_linear)
 ```
 
+### Building the Model
+
 ```{r}
 multi_linear <- lm(Petal.Width ~ Petal.Length + Sepal.Length + Sepal.Width + Species, data=iris)
 summary(multi_linear)
 ```
 
 ```{r}
+# model 2.0
+
+multi_linear2 <- lm(Petal.Width ~Sepal.Length + Sepal.Width + Species, data=iris)
+summary(multi_linear2)
+```
+
+### Interpretations
+
+**Petal.Width vs Sepal.Width**
+
+Holding all else constant, 1 unit change in Sepal.Width will cause a 0.23237 increase in Petal.Width.
+
+**Petal.Width vs. Virginica**
+
+Holding all else constant, having the flower to be of a virginica species will have a 1.7848 increase in Petal.Width as compared to a flower of a setosa species.
+
+#### Just to Note
+
+**P-Values** 
+
+- the probability of obtaining test results at least as extreme as the results actually observed, under the assumption that the null hypothesis is correct.
+- A small p-value (desired) means that such an extreme observed outcome would be very unlikely under the null hypothesis.
+
+
+**R-squared**
+
+- also known as the coefficient of determination
+- values range from 0 to 1
+- is the proportion of the variation of the dependent variable that is predictable from the independent variable
+- An R-squared of 1 (100%) means that all movements of a security (or another dependent variable(s)) are completely explained by movements in the index (or the independent variable).
+- Multiple r-squared vs Adjusted r-squared
+  - The fundamental point is that when you add predictors to your model, the multiple r-squared will always increase, as a predictor will always explain some portion of the variance. Adjusted r-squared controls against this increase, and adds penalties for the number of predictors in the model.
+  
+
+**F-statistic**
+
+- see ANOVA
+
+### Evaluating The Model
+
+```{r}
+# Testing the model
+
+# Splitting the data set
+dt = sort(sample(nrow(iris),nrow(iris)*0.7))
+train <- iris[dt,]
+test <- iris[-dt,]
+
+# Training the model[
+final_model <- lm(Petal.Width ~ Sepal.Length + Sepal.Width + Species, data=train)
+
+#predicting values
+predicted_vals <- predict(final_model, newdata =test)
+```
+
+*how to evaluate predicted vs actual values*
+
+### Validating Assumptions
+There are 4 assumptions to be validated:
+
+1. Linearity
+2. Homoscedasticity
+3. Independence
+4. Normality
+
+```{r}
+# plotting the residuals vs fitted plot and other validation plots
 par(mfrow=c(2,2))
 plot(multi_linear)
+```
+
+From the Residuals vs Fitted plot, we can see that categorized by Species, the residuals are randomly distributed, satistfying the assumptions of **linearity** and **homodascedasticity**.
+
+```{r}
+# correlation matrix
+pairs(iris)
+
+# VIF
+vif(multi_linear)
+```
+We plot a correlation matrix between the predictor variables to test for **independence**. We see that there is some collinearity between Petal.Length and Petal Width, but considering Petal. This is further reinforced with high VIF values. Species also has a high VIF value considering it to be a categorical variable. Thus we remove Petal.Length and re-run the model.
+
+```{r}
+hist(predicted_vals)
 ```
