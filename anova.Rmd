@@ -1,0 +1,58 @@
+---
+title: "anova"
+author: "Scott Heng"
+date: "9/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Questions:
+Why would i want to run ANOVA?
+# ANOVA
+
+## Theory 
+Analysis of variance (ANOVA) is a collection of statistical models and their associated estimation procedures used to analyze the differences among means. In it's simplest form, ANOVA provides a statistical test of whether two or more population means are equal, and therefore generalizer the t-test beyond two means. ANOVA is based on the law of total variance:
+
+### Definitions
+**Mean** is the average of the sum of numbers
+$$
+\mu = \frac{1}{n} \sum^{n}_{i=1}a_i
+$$
+$\mu$ = mean, $n$ = number of values/observations, $a_i$ = data set values
+
+**Variance** is the expectation of the squared deviation of a random variable from its mean
+$$
+S^2 = \frac{\sum(x_i = \hat{x})^2}{n-1}
+$$
+$S^2$ = sample variance, $n$ = number of values/observations, $x_i$ = value of $i^{th}$ observation, $\hat{x}$ = mean of all observations (sample mean)
+
+**Standard Deviation** is the measure of the amount of variation of a set of values
+$$
+\sigma = \sqrt{\frac{\sum{(x_i - \mu)^2}}{N}}
+$$
+$\sigma$ = standard deviation, $N$ = size of the population, $x_i$ = value of $i^{th}$ observation, $\mu$ = mean of all observations (sample mean)
+
+**The Law of Total Variance** states that the observed variance in a particular variable is partitioned into components attributable to different sources of variation
+
+### One-Way or Two-Way ANOVA
+
+One-way or two-way refers to the number of independent variables in an ANOVA test.
+- One-way has **one** independent variable
+- Two-way has **two** independent variables
+
+this relates to the different types of tests
+1. **One-way ANOVA**, used when testing differences between two groups
+2. **Two-way ANOVA (without replication)**, used when there is one group, and is being double tested (e.g. testing the same group of individuals before and after a treatment)
+3. **Two-way ANOVA (with replication)**, used when there are two groups being double tested (e.g. two groups of patients from two different hospitals trying two different therapies)
+
+
+
+
+
+
+
+
+
