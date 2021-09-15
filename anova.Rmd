@@ -9,8 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Questions:
-Why would i want to run ANOVA?
 # ANOVA
 
 ## Theory 
@@ -39,20 +37,158 @@ $\sigma$ = standard deviation, $N$ = size of the population, $x_i$ = value of $i
 
 ### One-Way or Two-Way ANOVA
 
+**In ANOVA, the response variable must be continuous while the explanatory variables must be categorical.**
+
 One-way or two-way refers to the number of independent variables in an ANOVA test.
 - One-way has **one** independent variable
 - Two-way has **two** independent variables
 
 this relates to the different types of tests
 1. **One-way ANOVA**, used when testing differences between two groups
+- one independent variable affecting a dependent variable
+- e.g. Studying the effects of tea on weight loss, over three groups: green tea, black tea and no tea (control).
+- will tell you if at least two groups were different from each other, but not which groups were different.
+- if test returns a significant f-statistic, one is required to run an ad hoc test (Least Significance Difference test) to tell one which groups have a difference in means.
+
 2. **Two-way ANOVA (without replication)**, used when there is one group, and is being double tested (e.g. testing the same group of individuals before and after a treatment)
+
+  
 3. **Two-way ANOVA (with replication)**, used when there are two groups being double tested (e.g. two groups of patients from two different hospitals trying two different therapies)
+- two independent variables affecting a dependent variable (1 quantitative response variable and 2 categorical explanatory variables)
+- e.g. interaction between anxiety level wtih income and gender (3 different income levels, 2 genders = 6 treatment groups)
+- will calculate a main effect and an interaction effect.
+  - main effect: each factor's effect is considered separately
+  - interaction effect: all factors are considered at the same time
+- Assumptions for two-way ANOVA:
+  - population must be close to a normal distribution
+  - Samples must be independent
+  - Population variances must be equal
+  - Groups must have equal sample sizes
 
+**ANOVA helps one understand how different groups respond, with a null hypothesis for the test that the means of the different groups are equal**
 
+Steps to conduct ANOVA:
+1. Calculate mean for each group
+2. Find the overall mean of the population
+3. Find the**Within Group Variation** - total deviation of each member's score from the Group Mean
+4. Find the **Between Group Variation** - the deviationof each Group Mean from the Overall Mean
+5. Calculate the f-statistic: ration between Group Variation to Within Group Variation
 
+### ANOVA vs T-test
+A T-test tells one if there is a significant variation between groups by comparing means. ANOVA compares variances between populations. Technically, one could perform a series of t-tests on the data, but this will result in many pair comparisons if one has many groups. Alternatively, ANOVA will provide a single number (F-statistic) and one p-value to help support or reject the null hypothesis.
 
+## Practice Example
 
+```{r}
+# install.packages(c("ggplot2", "ggpubr", "tidyverse", "broom", "AICcmodavg"))
+library(ggplot2)
+library(ggpubr)
+library(tidyverse)
+library(broom)
+library(AICcmodavg)
+```
 
+```{r}
+# loading in the data
+crop.data <- read.csv("resources/crop.data.csv")
+head(crop.data)
+summary(crop.data)
+
+# making explanatory variables categorical (factors)
+crop.data$density <- as.factor(crop.data$density)
+crop.data$fertilizer <- as.factor(crop.data$fertilizer)
+crop.data$block <- as.factor(crop.data$block)
+```
+
+### One-way ANOVA
+
+Modelling crop yield (independent variable) as a function of the type of fertilizer used (dependent variable).
+
+```{r}
+one.way <- aov(yield ~ fertilizer, data = crop.data)
+summary(one.way)
+```
+Reading the table:
+- **Df** - degrees of freedom for the independent variable (number of levels - 1)
+- **Sum Sq** - total variation between the group means and the overall mean
+- **Mean Sq** - within group variation
+- **F-value** - from the f-test
+
+#### Interpretations
+- With a low p-value(p < 0.001), it appears that the type of fertilizer used has a real impact on the final crop yield
+
+### Two-way ANOVA
+
+Modelling crop yield (independent variable) as a function of the type of fertilizer used and planting density (dependent variables)
+
+```{r}
+two.way <- aov(yield ~ fertilizer + density, data = crop.data)
+summary(two.way)
+```
+
+#### Interpretations
+- Adding planting density to the model seems to have made the model better (the residual variance is reduced).
+- Both fertilizer and planting density are statistically significant() with p < 0.001).
+
+#### Adding Interactions
+
+```{r}
+two.way.interaction <- aov(yield ~ fertilizer + density + fertilizer*density, data = crop.data)
+summary(two.way.interaction)
+```
+
+The interaction between planting density and fertilizer is not significant.
+
+#### Adding a blocking variable
+
+Grouping experimental treatments in some way or having a confounding variable (a variable that influences both the dependent variable and independent variable) might affect the relationship that is being tested. Including the blocking variable allows one to account for its effect
+
+```{r}
+two.way.blocking <- aov(yield ~ fertilizer + density + block, data=crop.data)
+summary(two.way.blocking)
+```
+
+Blocking variable does improve the model. It does not change the sum of squares of the independent variables and it is not statistically significant (p > 0.05).
+
+### Finding the best-fit model
+Finding the model that best explains the variation in the dependent variable.
+
+Using the Akaike information criterion (AIC) is a good test for model fit. AIC calculates the information value of each model by balancing the variation explained against the number of parameters used. The lower AIC is desired as a lower number means more information is explained.
+
+```{r}
+model.set <- list(one.way, two.way, two.way.blocking, two.way.interaction)
+model.names <- c("one.way","two.way","two.way.blocking","two.way.interaction")
+aictab(model.set, modnames = model.names)
+```
+
+Two.way is the best fit (with the lowest AIC value) and highest AIC weight (71% of the information can be explained by the model)
+
+### Validating Assumptions
+```{r}
+par(mfrow=c(2,2))
+plot(two.way)
+par(mfrow=c(1,1))
+```
+Each plot gives a specific piece of information about the model fit, but it’s enough to know that the red line representing the mean of the residuals should be horizontal and centered on zero (or on one, in the scale-location plot), meaning that there are no large outliers that would cause bias in the model.
+
+The normal Q-Q plot plots a regression between the theoretical residuals of a perfectly-homoscedastic model and the actual residuals of your model, so the closer to a slope of 1 this is the better. This Q-Q plot is very close, with only a bit of deviation.
+
+### Post-Hoc Test
+Finding out which groups are stastically different from one another using the **Tukey's Honestly Significant Difference Test**
+```{r}
+tukey.two.way <- TukeyHSD(two.way)
+tukey.two.way
+```
+
+We see that there are statistically significant differences (p < 0.05) between fertilizer groups 3 and 1 and between fertilizer types 3 and 2, but the difference between fertilizer groups 2 and 1 is not statistically significant. There is also a significant difference between the two different levels of planting density.
+
+## Others
+Hypothesis Testing
+BIC
+Multivariate Analysis of Variance - procedure for comparing multivariate sample means (multiple dependent variables)
+Factorial Analysis of Variance - procedure when test has more than one indepndent variable
+
+- If your model doesn’t fit the assumption of homoscedasticity, you can try the Kruskall-Wallis test instead.
 
 
 
