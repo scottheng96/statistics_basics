@@ -1,0 +1,140 @@
+---
+title: "ridge-regression-lasso"
+author: "Scott Heng"
+date: "9/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Ridge Regression
+
+### Introduction
+
+A simple linear regression model:
+$$
+Y = \beta_0 + \beta_1 X_1 + ... + \beta_p X_p + \epsilon
+$$
+
+In classical linear regression, we would minimize the residual sum of squares (RSS) to obtain the estimates of $\beta$'s
+
+$$
+RSS = \sum_{i=1}^n \left( y_i - \beta_0 - \sum^p_{j=1}\beta_jx_{ij} \right)^2
+$$
+
+The solution is called the ordinary least squares (OLS) and it is also the maximum likelihood estimator. As it is the maximum likelihood estimator:
+- the estimator is the best linear unbiased estimator
+- among possible unbiased estimators, the OLS achieves the minimum variance
+
+There are situations that the OLS has high variance, usually:
+- when there is **high collinearity** (high correlation between the predictors)
+- when the number of predictors (p) is of similar magniture to the number of observations (n)
+
+Thus despite being unbiased, the estimates are highly unstable.
+
+### Adding penalization
+
+**Ridge Regression** improves the estimator by decreasing the variance to obtain a better MSE.
+
+Recall that MSE:
+$$
+MSE(\hat{\beta}) = var(\hat\beta) + (\mathbb{E}(\hat\beta)-\beta)^2
+$$
+Knowing that mean squared error is the averaged squared error, while the residual sum of squares is the sum of the squared errors, recall:
+$$
+MSE = \frac{RSS}{n}
+$$
+
+This **trade-off** is achieved by adding a penalization term to the RSS:
+
+$$
+RSS = \left( y_i - \beta_0 - \sum^p_{j=1}\beta_jx_{ij} \right)^2 + \lambda \sum_{j=1}^p \beta_j^2
+$$
+where $\lambda$ is the **tuning parameter** that controls the amount of penalization. Essentially, it is the maximisation of the likelihood subject to a constraint. where $\beta_1^2 + \beta_2^2 + ... + \beta_p^2 \leq t$
+
+### Choosing the value of $\lambda$
+
+Try different values of $\lambda$ and choose one with the best MSE using cross-validation.
+
+## Practical Example
+
+```{r}
+#loading packages
+install.packages("glmnet")
+library(glmnet)
+```
+
+We are going to use ridge regression to predict the mileage of the car using mtcars dataset. Ridge regression is a reccommended approach as the number of predictors have similar magnitude to the number of observations.
+
+```{r}
+# loading the data
+head(mtcars)
+```
+### Building the Model
+
+```{r}
+# setting variables
+x_var <- data.matrix(mtcars[, !names(mtcars) %in% c("mpg")])
+y_var <- mtcars[,"mpg"]
+
+# setting range of lambdas to test
+lambdas <- 10^seq(2, -2, by =-.1)
+
+# fitting the model
+model.fit <- glmnet(x_var, y_var, alpha = 0, lambda = lambdas)
+summary(model.fit)
+```
+
+### Choosing the optimal lambda value
+
+```{r}
+# using cross-validation glmnet
+ridge_cv <- cv.glmnet(x_var, y_var, alpha = 0, lambda = lambdas)
+
+#plotting MSEs against lambdas
+plot(ridge_cv)
+
+# plotting path diagram (how lambads affect the estimation of the coefficients)
+plot(ridge_cv$glmnet.fit, "lambda", label=FALSE)
+
+#best lambda
+best_lambda <- ridge_cv$lambda.min
+best_lambda
+```
+
+### Building the best ridge regression model with the optimal lambda
+```{r}
+ridge.model <- glmnet(x_var, y_var, alpha = 0, lambda = best_lambda)
+ridge.model$beta
+
+# comparing to a regular linear model
+```
+
+# Lasso Regression
+
+Lasso regression is similar to ridge regression, with the exception that the penalization term is mod instead of squared.
+
+$$
+RSS = \left( y_i - \beta_0 - \sum^p_{j=1}\beta_jx_{ij} \right)^2 + \lambda \sum_{j=1}^p | \beta_j |
+$$
+
+This difference allows the penalization term can shrink to 0, while ridge can only shrink the penalization term asymtotically close to 0.
+
+### Using Ridge Regression
+```{r}
+# alpha = 1 -> lasso, alpha = 0 -> ridge | if lambads aren't specified, model selects optimal automatically
+lasso.model <- cv.glmnet(x_var, y_var, alpha = 1)
+
+best_lambda_lasso <- lasso.model$lambda.min
+best_lambda_lasso
+
+best.lasso.model <- glmnet(x_var,y_var,alpha=1, lambda=best_lambda)
+```
+
+### Analyzing model performance
+# TODO
+
+### Extras
+#### L1 and L2 regularization
