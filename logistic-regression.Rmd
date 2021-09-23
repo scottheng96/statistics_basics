@@ -1,0 +1,116 @@
+---
+title: "logistic-regression"
+author: "Scott Heng"
+date: "9/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Logistic Regression
+
+## Theory
+
+The logistic model (or logit model) is used to model the probability of a certain class or event existing. In its basic form, it uses a logistic function to model a binary **categorical** dependent variable but can be extended to model multiple classes. Each class being detected would be assigned a probability between 0 and 1 with a sum of 1.
+
+Consider a model with two predictors, $x_1$ and $x_2$, and a binary (Bernoulli) response variable $Y$, denoted as $p = P(Y=1)$. We assume a linear relationship between the predictor variables and the log-odds of the event that $Y=1$. This can be written in mathematical form:
+
+$$
+\ell = \textrm{log}_b \frac{p}{1-p} = \beta_0 + \beta_1 x_1 + \beta_2 x_2
+$$
+where $\ell$ is the log-odds, $b$ is the base of the logarithm, and $\beta_i$ are the parameters of the model.
+
+## When to use Logistic Regression
+- When the response variable is categorical (binary, multinomial, ordinal)
+
+**Why log-odds?**
+Whenever a straight line is fit to a binary response that is coded 0 or 1, in principle we can always predict $p(X) < 0$ for some and $p(X) > 1$ for others. Instead, we can use the logistic function to model outputs between 0 and 1.
+
+## Practical Example
+
+The dataset shows daily percentage returns for the S&P 500 stock index between 2001 and 2005. Our response variable will be **Direction**, showing whether the market went up or down since the previous day.
+
+```{r}
+#install packages
+#install.packages("ISLR")
+library(ISLR)
+library(corrplot)
+```
+
+```{r}
+head(Smarket)
+```
+### Exploratory Data Analysis
+
+```{r}
+# histograms
+par(mfrow=c(1,8))
+for(i in 1:8) {
+  hist(Smarket[,i],main=names(Smarket)[i])
+}
+```
+
+```{r}
+# boxplots
+par(mfrow=c(1,8))
+for (i in 1:8) {
+  boxplot(Smarket[,i],main=names(Smarket)[i])
+}
+```
+
+```{r}
+# correlation matrix
+correlations <- cor(Smarket[,1:8])
+corrplot(correlations,method="circle")
+```
+None of the variables seem to be correlated with one another.
+
+```{r}
+# scatterplot matrix
+pairs(Smarket, col=Smarket$Direction)
+```
+
+### Building the Logistic Regression Model
+
+```{r}
+glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Smarket, family = binomial)
+summary(glm.fit)
+```
+
+Observing the various large p-values, it seems that none of the coefficients are significant here. The null deviance (deviance for the mean) and the residual deviance (deviance fro the model with all predictors), there seems to be a small difference, along with 6 degrees of freedom.
+
+**Interpretation** For one unit increase in **volume**, the log odds of the market ending on a upwards trend increase by a factor of 0.135.
+
+Now I can make predictions/probabilities if the market is going up or down based on my fitted model:
+
+```{r}
+glm.probs <- predict(glm.fit, type="response")
+glm.probs[1:5]
+glm.pred <- ifelse(glm.probs > 0.5, "Up", "Down")
+```
+
+```{r}
+attach(Smarket)
+table(glm.pred,Direction)
+mean(glm.pred==Direction)
+```
+
+The mean of 0.52 means that I will be right only slightly above average over time. This isn't too good of a fitted model.
+
+## Extras
+
+### Overfitting
+Overfitting is a statistical concept that occurs when a statistical model fits too closely or exactly to a particular set of data, and may therefore fail to fit additional data or predict future observations reliably.
+
+On the other hand **underfitting** occurs when a model is too simple - informed by too few featurse or regularized too much, making it inflexible in learning from the dataset.
+
+To test this, we can split our initial dataset into separate training and test subsets. (K-folds cross-validation)
+
+Strategies to prevent overfitting:
+- Train with more data
+- Remove features **through feature selection**
+- Early stopping:
+  - when training a learning algorithm iteratively, you can measure how well each iteration of the model performs, and stop after a certain number of iterations where the model's ability to generalize can weaken and begin to overfit the data
+- Regularization: a broad range of techniques for artificially forcing your model to be simpler
